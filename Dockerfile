@@ -1,6 +1,6 @@
 
 FROM ubuntu:14.04
-ADD http://mirrors.163.com/.help/sources.list.trusty /etc/apt/sources.list
+ADD http://oieyq8sjs.bkt.clouddn.com//sources.list/sources.list /etc/apt/sources.list
 COPY install.sh /usr/local/src/install.sh
 COPY supervisord.conf /usr/local/src/supervisord.conf
 
@@ -25,9 +25,18 @@ RUN apt-get  update && \
     apt-get -y install libxslt-dev && \
     apt-get -y install libgmp-dev && \
     apt-get -y install libreadline-dev && \
-    apt-get -y install curl && \	
+    apt-get -y install curl && \
 	apt-get -y install autoconf && \
-    bash /usr/local/src/install.sh 
+    bash /usr/local/src/install.sh && \
+    echo "export PATH=\" $PATH:/usr/local/php5.6/bin/:/usr/local/nginx/:/usr/local/apache/bin \"" >> /etc/profile && \
+
+    export PATH="$PATH:/usr/local/php5.6/bin/" && \
+    cd /usr/local/src && \
+    php -r "readfile('https://getcomposer.org/installer');" > composer-setup.php && \
+    php composer-setup.php && \
+    rm composer-setup && \
+    mv composer-phar /usr/local/php5.6/bin && \
+    composer config -g repo.packagist composer https://packagist.phpcomposer.com
 
 CMD supervisord -n
 
