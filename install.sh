@@ -1,23 +1,21 @@
 #! /bin/bash
 
-#apt-get install lrzsz
-
 cd /usr/local/src
 
 wget http://mirrors.cnnic.cn/apache//apr/apr-1.5.2.tar.gz  -O apr.tar.gz
 wget http://mirrors.cnnic.cn/apache//apr/apr-util-1.5.4.tar.gz -O apr-util.tar.gz
 wget http://oieyq8sjs.bkt.clouddn.com/pcre-8.39.tar.gz -O pcre.tar.gz
-wget http://mirrors.hust.edu.cn/apache//httpd/httpd-2.4.25.tar.gz -O httpd.tar.gz
+wget http://mirrors.tuna.tsinghua.edu.cn/apache//httpd/httpd-2.4.25.tar.gz -O httpd.tar.gz
 wget http://cn2.php.net/get/php-5.6.29.tar.gz/from/this/mirror -O php5.6.tar.gz
-wget http://nginx.org/download/nginx-1.7.1.tar.gz -O nginx1.7.tar.gz
+wget https://nginx.org/download/nginx-1.8.1.tar.gz -O nginx1.8.tar.gz
 
-
+mkdir nginx1.8 && tar -xzf nginx1.8.tar.gz -C ./nginx1.8 --strip-components=1
 mkdir apr && tar -xzf apr.tar.gz -C ./apr --strip-components=1
 mkdir apr-util && tar -xzf apr-util.tar.gz -C ./apr-util --strip-components=1
 mkdir pcre && tar -xzf pcre.tar.gz -C ./pcre --strip-components=1
-mkdir httpd && tar -xzvf httpd.tar.gz -C ./httpd --strip-components=1
-mkdir php5.6 && tar -xzvf php5.6.tar.gz -C ./php5.6 --strip-components=1
-mkdir nginx1.7 && tar -xzvf nginx1.7.tar.gz -C ./nginx1.7 --strip-components=1
+mkdir httpd && tar -xzf httpd.tar.gz -C ./httpd --strip-components=1
+mkdir php5.6 && tar -xzf php5.6.tar.gz -C ./php5.6 --strip-components=1
+
 
 ln -s /usr/include/x86_64-linux-gnu/gmp.h /usr/include/gmp.h
 
@@ -34,14 +32,7 @@ cd ../pcre
 
 cd ../httpd
 ./configure --prefix=/usr/local/apache --with-apr=/usr/local/apr --with-mpm=prefork --with-apr-util=/usr/local/apr-util && make && make install
-
 cp /usr/local/apache/bin/apachectl /etc/init.d/httpd
-
-cd ../nginx1.7
-./configure --sbin-path=/usr/local/nginx/bin/ngxin \
-	--conf-path=/usr/local/nginx/nginx.conf \
-  	--pid-path=/usr/local/nginx/nginx.pid \
-  	--with-pcre && make && make install
 
 
 cd ../php5.6
@@ -102,22 +93,30 @@ cd ../php5.6
 --with-mysqli \
 --with-mysql \
 --with-apxs2=/usr/local/apache/bin/apxs  && make && make install
-
 cp /usr/local/src/php5.6/php.ini-production /usr/local/php5.6/etc/php.ini
 
-cd /usr/local/src
-rm -fr *
+
+cd ../nginx1.8
+./configure --sbin-path=/usr/local/nginx/nginx \
+	--conf-path=/usr/local/nginx/nginx.conf \
+  	--pid-path=/usr/local/nginx/nginx.pid \
+  	--with-pcre && make && make install
+
 
 adduser --gecos '' --disabled-password chenjiayao
 echo -e '11\n11' | passwd chenjiayao
 echo -e '11\n11' | passwd root
 
+cd /usr/local/src
+rm -fr *
+
 rm /etc/ld.so.cache && /sbin/ldconfig
+echo "export PATH=$PATH:/usr/local/php5.6/bin/:/usr/local/nginx/:/usr/local/apache/bin" >> /root/.bashrc 
+echo "export PATH=$PATH:/usr/local/php5.6/bin/:/usr/local/nginx/:/usr/local/apache/bin" >> /home/chenjiayao/.bashrc 
 
-# install mysql without input password magic .....
-debconf-set-selections <<< 'mysql-server mysql-server/root_password password 111111'
-debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password 111111'
-apt-get -y install mysql-server
-
-
-echo '=========================================ok===================================='
+export PATH="$PATH:/usr/local/php5.6/bin/" 
+cd /usr/local/src 
+php -r "readfile('https://getcomposer.org/installer');" > composer-setup.php 
+php composer-setup.php 
+mv composer.phar /usr/local/php5.6/bin/composer 
+composer config -g repo.packagist composer https://packagist.phpcomposer.com 
